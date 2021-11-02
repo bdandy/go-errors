@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-type err interface {
+type TypedError interface {
 	error
 	Is(err error) bool
 	WithArgs(args ...interface{}) formatted
@@ -13,18 +13,18 @@ type err interface {
 
 // formatted represents error with additional params for Sprintf format
 type formatted struct {
-	err
+	TypedError
 	args []interface{}
 }
 
 // Error implements errors interface
 func (e formatted) Error() string {
-	return fmt.Sprintf(e.err.Error(), e.args...)
+	return fmt.Sprintf(e.TypedError.Error(), e.args...)
 }
 
 // wrapped is custom error type for better error handling
 type wrapped struct {
-	err
+	TypedError
 	cause error
 }
 
@@ -36,8 +36,8 @@ func (e wrapped) Unwrap() error {
 // Error implements error interface; prints both error and cause
 func (e wrapped) Error() string {
 	if e.cause == nil {
-		return e.err.Error()
+		return e.TypedError.Error()
 	}
 
-	return fmt.Sprintf("%s %#v", e.err.Error(), e.cause)
+	return fmt.Sprintf("%s %#v", e.TypedError.Error(), e.cause)
 }
