@@ -7,6 +7,8 @@ import (
 type err interface {
 	error
 	Is(err error) bool
+	WithArgs(args ...interface{}) formatted
+	Wrap(err error) wrapped
 }
 
 // formatted represents error with additional params for Sprintf format
