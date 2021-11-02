@@ -20,19 +20,19 @@ func (e formatted) Error() string {
 	return fmt.Sprintf(e.err.Error(), e.args...)
 }
 
-// cause is custom error type for better error handling
-type cause struct {
+// wrapped is custom error type for better error handling
+type wrapped struct {
 	err
 	cause error
 }
 
 // Unwrap implements errors.Unwrap interface
-func (e cause) Unwrap() error {
+func (e wrapped) Unwrap() error {
 	return e.cause
 }
 
 // Error implements error interface; prints both error and cause
-func (e cause) Error() string {
+func (e wrapped) Error() string {
 	if e.cause == nil {
 		return e.err.Error()
 	}

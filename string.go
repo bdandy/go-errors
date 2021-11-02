@@ -15,14 +15,14 @@ func (e String) Is(err error) bool {
 	return e == ee
 }
 
-// cause implements error interface
+// wrapped implements error interface
 func (e String) Error() string {
 	return string(e)
 }
 
-// Wrap adds cause to the String error and return cause
-func (e String) Wrap(err error) cause {
-	return cause{
+// Wrap adds cause to the String error and return wrapped
+func (e String) Wrap(err error) wrapped {
+	return wrapped{
 		err:   e,
 		cause: err,
 	}
