@@ -11,6 +11,7 @@ type TypedError interface {
 
 	Is(err error) bool
 	WithArgs(args ...interface{}) TypedError
+	Wrap(err error) TypedError
 }
 
 // String implements TypedError
@@ -36,6 +37,11 @@ func (e String) String() string {
 	return e.Error()
 }
 
+// Wrap adds cause to the String error and return wrapped
+func (e String) Wrap(cause error) TypedError {
+	return Wrap(e, cause)
+}
+
 // WithArgs returns new error which would be formatted
 // Note: args are not impact on errors.Is; multiple call WithArgs sets most recent ones
 // so if two errors has different arguments they still would be equal
@@ -58,6 +64,11 @@ func (e formatted) Error() string {
 	return fmt.Sprintf(e.TypedError.Error(), e.args...)
 }
 
+// Wrap adds cause to the formatted error and return wrapped
+func (e formatted) Wrap(cause error) TypedError {
+	return Wrap(e, cause)
+}
+
 // String() implements stringer interface
 func (e formatted) String() string {
 	return e.Error()
@@ -67,6 +78,11 @@ func (e formatted) String() string {
 type wrapped struct {
 	TypedError
 	cause error
+}
+
+// Wrap adds cause to the error and return new wrapped error
+func (e wrapped) Wrap(cause error) TypedError {
+	return Wrap(e, cause)
 }
 
 // Unwrap implements errors.Unwrap interface
