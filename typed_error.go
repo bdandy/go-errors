@@ -10,8 +10,8 @@ type TypedError interface {
 	fmt.Stringer
 
 	Is(err error) bool
-	WithArgs(args ...interface{}) formatted
-	Wrap(err error) wrapped
+	WithArgs(args ...interface{}) TypedError
+	Wrap(err error) TypedError
 }
 
 // String implements TypedError
@@ -38,7 +38,7 @@ func (e String) String() string {
 }
 
 // Wrap adds cause to the String error and return wrapped
-func (e String) Wrap(err error) wrapped {
+func (e String) Wrap(err error) TypedError {
 	return wrapped{
 		TypedError: e,
 		cause:      err,
@@ -49,7 +49,7 @@ func (e String) Wrap(err error) wrapped {
 // Note: args are not impact on errors.Is; multiple call WithArgs sets most recent ones
 // so if two errors has different arguments they still would be equal
 // Use Sprintf for formatting, so use #Wrap method instead of %w for wrapping
-func (e String) WithArgs(args ...interface{}) formatted {
+func (e String) WithArgs(args ...interface{}) TypedError {
 	return formatted{
 		TypedError: e,
 		args:       args,
@@ -79,7 +79,7 @@ type wrapped struct {
 }
 
 // Wrap adds cause to the error and return new wrapped error
-func (e wrapped) Wrap(err error) wrapped {
+func (e wrapped) Wrap(err error) TypedError {
 	return wrapped{
 		TypedError: e,
 		cause:      err,
