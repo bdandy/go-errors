@@ -11,7 +11,6 @@ type TypedError interface {
 
 	Is(err error) bool
 	WithArgs(args ...interface{}) TypedError
-	Wrap(err error) TypedError
 }
 
 // String implements TypedError
@@ -19,7 +18,7 @@ type String string
 
 // Is implements errors.Is
 func (e String) Is(err error) bool {
-	var ee String
+	var ee TypedError
 	if !errors.As(err, &ee) {
 		return false
 	}
@@ -35,14 +34,6 @@ func (e String) Error() string {
 // String implements stringer interface
 func (e String) String() string {
 	return e.Error()
-}
-
-// Wrap adds cause to the String error and return wrapped
-func (e String) Wrap(err error) TypedError {
-	return wrapped{
-		TypedError: e,
-		cause:      err,
-	}
 }
 
 // WithArgs returns new error which would be formatted
@@ -78,14 +69,6 @@ type wrapped struct {
 	cause error
 }
 
-// Wrap adds cause to the error and return new wrapped error
-func (e wrapped) Wrap(err error) TypedError {
-	return wrapped{
-		TypedError: e,
-		cause:      err,
-	}
-}
-
 // Unwrap implements errors.Unwrap interface
 func (e wrapped) Unwrap() error {
 	return e.cause
@@ -97,5 +80,18 @@ func (e wrapped) Error() string {
 		return e.TypedError.Error()
 	}
 
-	return fmt.Sprint(e.TypedError.Error(), e.cause.Error())
+	return fmt.Sprint(e.TypedError.Error(), ": ", e.cause.Error())
+}
+
+// Wrap returns wrapped error
+func Wrap(err error, cause error) (te TypedError) {
+	var ok bool
+	if te, ok = err.(TypedError); !ok {
+		te = String(err.Error())
+	}
+
+	return wrapped{
+		TypedError: te,
+		cause:      cause,
+	}
 }
