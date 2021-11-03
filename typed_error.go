@@ -29,12 +29,12 @@ func (e String) Is(err error) bool {
 
 // Error implements errors interface
 func (e String) Error() string {
-	return string(e)
+	return e.String()
 }
 
 // String implements stringer interface
 func (e String) String() string {
-	return e.Error()
+	return string(e)
 }
 
 // Wrap adds cause to the String error and return wrapped
@@ -61,17 +61,17 @@ type formatted struct {
 
 // Error implements errors interface
 func (e formatted) Error() string {
+	return e.String()
+}
+
+// String() implements stringer interface
+func (e formatted) String() string {
 	return fmt.Sprintf(e.TypedError.Error(), e.args...)
 }
 
 // Wrap adds cause to the formatted error and return wrapped
 func (e formatted) Wrap(cause error) TypedError {
 	return Wrap(e, cause)
-}
-
-// String() implements stringer interface
-func (e formatted) String() string {
-	return e.Error()
 }
 
 // wrapped is custom error type for better error handling
@@ -99,7 +99,8 @@ func (e wrapped) Error() string {
 	return fmt.Sprint(e.TypedError.Error(), ": ", e.cause.Error())
 }
 
-// Wrap returns wrapped error
+// Wrap returns wrapped error with given cause.
+// If err is not typed - converts it into String by calling .Error()
 func Wrap(err error, cause error) (te TypedError) {
 	var ok bool
 	if te, ok = err.(TypedError); !ok {
