@@ -78,6 +78,14 @@ type wrapped struct {
 	cause error
 }
 
+// Wrap adds cause to the error and return new wrapped error
+func (e wrapped) Wrap(err error) wrapped {
+	return wrapped{
+		TypedError: e,
+		cause:      err,
+	}
+}
+
 // Unwrap implements errors.Unwrap interface
 func (e wrapped) Unwrap() error {
 	return e.cause
