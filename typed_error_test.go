@@ -94,3 +94,27 @@ func TestTypedError_Unwrap(t *testing.T) {
 		})
 	}
 }
+
+func TestTypedError_As(t *testing.T) {
+	var (
+		chain    = fmt.Errorf("second: %w", fmt.Errorf("first: %w", err))
+		chainFmt = fmt.Errorf("second: %w", fmt.Errorf("first: %w", errFmt))
+	)
+
+	tests := []struct {
+		name string
+		e    error
+		want error
+	}{
+		{"error chain", chain, err},
+		{"error chain fmt", chainFmt, errFmt},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var err TypedError
+			if got := errors.As(tt.e, &err); !got || err.Error() != tt.want.Error() {
+				t.Errorf("errors.As() = %v; want %v", err, tt.want)
+			}
+		})
+	}
+}
