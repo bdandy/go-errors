@@ -11,6 +11,7 @@ type TypedError interface {
 
 	Is(err error) bool
 	WithArgs(args ...interface{}) TypedError
+	Wrap(err error) TypedError
 }
 
 // String implements TypedError
@@ -34,6 +35,11 @@ func (e String) Error() string {
 // String implements stringer interface
 func (e String) String() string {
 	return e.Error()
+}
+
+// Wrap adds cause to the String error and return wrapped
+func (e String) Wrap(cause error) TypedError {
+	return Wrap(e, cause)
 }
 
 // WithArgs returns new error which would be formatted
@@ -67,6 +73,11 @@ func (e formatted) String() string {
 type wrapped struct {
 	TypedError
 	cause error
+}
+
+// Wrap adds cause to the error and return new wrapped error
+func (e wrapped) Wrap(cause error) TypedError {
+	return Wrap(e, cause)
 }
 
 // Unwrap implements errors.Unwrap interface
