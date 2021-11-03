@@ -97,5 +97,5 @@ func (e wrapped) Error() string {
 		return e.TypedError.Error()
 	}
 
-	return fmt.Sprintf("%s %s", e.TypedError.Error(), e.cause.Error())
+	return fmt.Sprint(e.TypedError.Error(), e.cause.Error())
 }
