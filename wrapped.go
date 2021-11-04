@@ -73,25 +73,34 @@ func (e wrapped) withStack() wrapped {
 // Stack implements TypedError
 // Stack returns original stack which was placed to wrapped error
 func (e wrapped) Stack() string {
-	return e.stackFunc()
+	if e.stackFunc != nil {
+		return e.stackFunc()
+	}
+
+	return ""
 }
 
 // Wrap wraps an error, adds its cause and stack trace
 func Wrap(err, cause error) (e wrapped) {
 	te, ok := err.(TypedError)
 	if !ok {
-		e.TypedError = ErrorString(err.Error())
+		e.TypedError = String(err.Error()).New()
 		e.cause = cause
-		return e.withStack()
+		return e
 	}
 
 	e.TypedError = te
 	e.cause = cause
 
-	return e.withStack()
+	return e
 }
 
-// Stack returns stack if err is wrapped
+// WrapWithStack wraps cause with err and stores stack trace
+func WrapWithStack(err, cause error) wrapped {
+	return Wrap(err, cause).withStack()
+}
+
+// Stack returns stack if err is wrapped or implements Stack() string method
 func Stack(err error) string {
 	we, ok := err.(interface{ Stack() string })
 	if !ok {

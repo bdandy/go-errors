@@ -4,13 +4,12 @@
 Main reason was to create additional methods for better error typing support.
 
 ## Features
+- Errors as constants
 - `errors.Is` support
 - `xerrors.Wrapper` support with `Unwrap` method
-- `#WithArgs` support to add context arguments for error message, while `errors.Is` still working
-- Errors as constants
+- `String.NewWithArgs` support to add context arguments for error message, while `errors.Is` working
+- `String.NewWithStack` support to store stack trace (untested)
 - IDE highlighting, as type based on strings
--  ... Ask for new features.
-
 
 ### Show me the code
 
@@ -34,7 +33,7 @@ func someFunc() error {
 func typedError(args ...interface{}) error {
 	err := someFunc()
 	if err != nil {
-		return ErrWrongBehaviour.WithArgs(args...).Wrap(err)
+		return ErrWrongBehaviour.NewWithArgs(args...).Wrap(err)
 	}
 	return nil
 }

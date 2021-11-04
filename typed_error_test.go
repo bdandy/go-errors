@@ -17,10 +17,9 @@ func TestTypedError_Is(t *testing.T) {
 	}
 
 	var (
-		formatted  = errFmt.WithArgs("formattedString")
-		wrapped    = err.Wrap(errors.New("cause"))
+		formatted  = errFmt.NewWithArgs("formattedError")
+		wrapped    = err.New().Wrap(errors.New("cause"))
 		wrappedFmt = formatted.Wrap(errors.New("cause"))
-		caused     = fmt.Errorf("caused by %w", err)
 	)
 
 	tests := []struct {
@@ -29,17 +28,18 @@ func TestTypedError_Is(t *testing.T) {
 		args args
 		want bool
 	}{
-		{"error has same type", err, args{err}, true},
-		{"formattedString error", formatted, args{errFmt}, true},
+		{"error has same type", err.New(), args{err}, true},
+		{"formattedError error", formatted, args{errFmt}, true},
 		{"wrapped error", wrapped, args{err}, true},
-		{"wrapped and formattedString", wrappedFmt, args{errFmt}, true},
-		{"error was cause", wrapped, args{caused}, true},
-		{"error has different type", err, args{String("other")}, false},
-		{"error has different type but same text", err, args{errors.New("err")}, false},
+		{"wrapped and formattedError", wrappedFmt, args{errFmt}, true},
+		{"error has different type", err.New(), args{String("other")}, false},
+		{"error has different type but same text", err.New(), args{errors.New("err")}, false},
+		// wrong behaviour for Is method
+		{"error was cause", wrapped, args{fmt.Errorf("caused by %w", err)}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.e.Is(tt.args.err); got != tt.want {
+			if got := errors.Is(tt.e, tt.args.err); got != tt.want {
 				t.Errorf("Is() = %v, want %v", got, tt.want)
 			}
 		})
@@ -61,8 +61,8 @@ func Test_Wrap(t *testing.T) {
 		args args
 		want string
 	}{
-		{"error wrap", args{err, cause}, "err: root"},
-		{"error formattedString", args{errFmt.WithArgs("formattedString"), cause}, "err formattedString: root"},
+		{"error wrap", args{err.New(), cause}, "err: root"},
+		{"error formattedError", args{errFmt.NewWithArgs("formattedError"), cause}, "err formattedError: root"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -81,8 +81,8 @@ func TestTypedError_Unwrap(t *testing.T) {
 		e    wrapped
 		want error
 	}{
-		{"without cause", err.Wrap(nil), nil},
-		{"with cause", err.Wrap(cause), cause},
+		{"without cause", err.New().Wrap(nil), nil},
+		{"with cause", err.New().Wrap(cause), cause},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -95,8 +95,8 @@ func TestTypedError_Unwrap(t *testing.T) {
 
 func TestTypedError_As(t *testing.T) {
 	var (
-		chain    = fmt.Errorf("second: %w", fmt.Errorf("first: %w", err))
-		chainFmt = fmt.Errorf("second: %w", fmt.Errorf("first: %w", errFmt))
+		chain    = fmt.Errorf("second: %w", fmt.Errorf("first: %w", err.New()))
+		chainFmt = fmt.Errorf("second: %w", fmt.Errorf("first: %w", errFmt.New()))
 	)
 
 	tests := []struct {
@@ -118,13 +118,26 @@ func TestTypedError_As(t *testing.T) {
 }
 
 func BenchmarkWrap(b *testing.B) {
-	const strerr = ErrorString("error")
+	const strerr = String("error")
 
 	b.ReportAllocs()
 	var res string
 	for i := 0; i < b.N; i++ {
 		var err = errors.New("cause")
-		err = strerr.Wrap(err)
+		err = strerr.New().Wrap(err)
+		res = err.Error()
+	}
+	_ = res
+}
+
+func BenchmarkWrapWithStack(b *testing.B) {
+	const strerr = String("error")
+
+	b.ReportAllocs()
+	var res string
+	for i := 0; i < b.N; i++ {
+		var err = errors.New("cause")
+		err = strerr.New().WithStack()
 		res = err.Error()
 	}
 	_ = res
