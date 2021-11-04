@@ -6,4 +6,5 @@ type TypedError interface {
 	Is(err error) bool
 	WithArgs(args ...interface{}) formattedString
 	Wrap(cause error) wrapped
+	Stack() string
 }

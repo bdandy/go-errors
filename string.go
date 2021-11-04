@@ -45,3 +45,9 @@ func (e ErrorString) WithArgs(args ...interface{}) formattedString {
 func (e ErrorString) Wrap(cause error) wrapped {
 	return Wrap(e, cause)
 }
+
+// Stack implements TypedError
+// NOOP as String isn't wrapped
+func (e ErrorString) Stack() string {
+	return ""
+}

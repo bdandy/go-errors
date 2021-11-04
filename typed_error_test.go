@@ -118,9 +118,9 @@ func TestTypedError_As(t *testing.T) {
 }
 
 func BenchmarkWrap(b *testing.B) {
-	b.ReportAllocs()
+	const strerr = ErrorString("error")
 
-	const strerr = String("error")
+	b.ReportAllocs()
 	var res string
 	for i := 0; i < b.N; i++ {
 		var err = errors.New("cause")
@@ -131,10 +131,12 @@ func BenchmarkWrap(b *testing.B) {
 }
 
 func BenchmarkErrorfWrap(b *testing.B) {
-	b.ReportAllocs()
+	var (
+		strerr = errors.New("error")
+		res    string
+	)
 
-	var strerr = errors.New("error")
-	var res string
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		var err = errors.New("cause")
 		err = fmt.Errorf("%s: %w", strerr, err)

@@ -22,3 +22,9 @@ func (e formattedString) String() string {
 func (e formattedString) Wrap(cause error) wrapped {
 	return Wrap(e, cause)
 }
+
+// Stack implements TypedError
+// NOOP as formattedString isn't wrapped
+func (e formattedString) Stack() string {
+	return ""
+}

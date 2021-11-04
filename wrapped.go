@@ -1,7 +1,9 @@
 package typed_errors
 
 import (
-	"strings"
+	"bytes"
+	"runtime"
+	"strconv"
 )
 
 type Wrapped interface {
@@ -11,7 +13,8 @@ type Wrapped interface {
 // wrapped is custom error type for better error handling
 type wrapped struct {
 	TypedError
-	cause error
+	cause     error
+	stackFunc func() string
 }
 
 // Wrap adds cause to the error and return new wrapped error
@@ -26,11 +29,11 @@ func (e wrapped) Unwrap() error {
 
 // Error implements error interface; prints both error and cause
 func (e wrapped) Error() string {
-	var builder strings.Builder
+	var builder bytes.Buffer
 	builder.WriteString(e.TypedError.Error())
 
+	const separator = ": "
 	if e.cause != nil {
-		const separator = ": "
 		builder.WriteString(separator)
 		builder.WriteString(e.cause.Error())
 	}
@@ -38,17 +41,62 @@ func (e wrapped) Error() string {
 	return builder.String()
 }
 
-// Wrap wraps an error with cause
+func (e wrapped) withStack() wrapped {
+	if e.stackFunc == nil {
+		var callers [1 << 5]uintptr
+
+		runtime.Callers(4, callers[:])
+		e.stackFunc = func() string {
+			frames := runtime.CallersFrames(callers[:])
+
+			var buf bytes.Buffer
+			for {
+				frame, more := frames.Next()
+				buf.WriteString(frame.Function)
+				buf.WriteString("\n\t")
+				buf.WriteString(frame.File)
+				buf.WriteString(":")
+				buf.WriteString(strconv.Itoa(frame.Line))
+				buf.WriteString("\n")
+				if !more {
+					break
+				}
+			}
+
+			return buf.String()
+		}
+	}
+
+	return e
+}
+
+// Stack implements TypedError
+// Stack returns original stack which was placed to wrapped error
+func (e wrapped) Stack() string {
+	return e.stackFunc()
+}
+
+// Wrap wraps an error, adds its cause and stack trace
 func Wrap(err, cause error) (e wrapped) {
 	te, ok := err.(TypedError)
 	if !ok {
 		e.TypedError = ErrorString(err.Error())
 		e.cause = cause
-		return
+		return e.withStack()
 	}
 
 	e.TypedError = te
 	e.cause = cause
 
-	return
+	return e.withStack()
+}
+
+// Stack returns stack if err is wrapped
+func Stack(err error) string {
+	we, ok := err.(interface{ Stack() string })
+	if !ok {
+		return ""
+	}
+
+	return we.Stack()
 }
