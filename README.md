@@ -13,7 +13,7 @@ Main reason was to create additional methods for better error typing support.
 
 ### Show me the code
 
-https://play.golang.org/p/ZSHBCxXQx6A
+https://play.golang.org/p/gEUizk93xnW
 
 ```go
 package main
