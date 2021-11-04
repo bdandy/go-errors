@@ -59,6 +59,8 @@ goos: linux
 goarch: amd64
 pkg: github.com/Bogdan-D/go-typed-errors
 cpu: Intel(R) Core(TM) i7-1065G7 CPU @ 1.30GHz
-BenchmarkWrap-8                  7856391               180.7 ns/op            88 B/op          5 allocs/op
-BenchmarkErrorfWrap-8            4080972               291.3 ns/op            64 B/op          3 allocs/op
+BenchmarkWrap-8                  6433347               242.0 ns/op           160 B/op          5 allocs/op
+BenchmarkWrapWithStack-8         1330672               913.3 ns/op           421 B/op          7 allocs/op
+BenchmarkErrorfWrap-8            4093844               287.2 ns/op            64 B/op          3 allocs/op
+PASS
 ```
