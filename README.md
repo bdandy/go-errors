@@ -6,10 +6,9 @@ Main reason was to create additional methods for better error typing support.
 ## Features
 - Errors as constants
 - `errors.Is` support
-- `xerrors.Wrapper` support with `Unwrap` method
-- `String.NewWithArgs` support to add context arguments for error message, while `errors.Is` working
+- `Wrap` method to wrap original error with `errors.Unwrap` method
+- `String.NewWithArgs` support to add context arguments for error message, while `errors.Is` still compares error itself
 - `String.NewWithStack` support to store stack trace (untested)
-- IDE highlighting, as type based on strings
 
 ### Show me the code
 
