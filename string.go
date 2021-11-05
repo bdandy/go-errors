@@ -1,29 +1,20 @@
-package typed_errors
+package serrors
 
-// String which used in const as error
+// String is only one public type which should be used in const as error
 type String string
 
-// New returns new typed error
-func (e String) New() typedError {
-	return typedError{e}
+// New returns new sentinel error. We assume that New() called only once per error
+// Note: if two errors has different arguments but same type `errors.Is` will return true
+func (e String) New(args ...interface{}) sentinelError {
+	return sentinelError{eString: &e, args: args}
 }
 
-// NewWithArgs returns new error which would be formattedError
-// Note: if two errors has different arguments they still would be equal
-// Used Sprintf for formatting, so use #Wrap method instead of %w for wrapping
-func (e String) NewWithArgs(args ...interface{}) formattedError {
-	return formattedError{
-		typedError: e.New(),
-		args:       args,
-	}
-}
-
-// Error implements errors interface
+// Error implements error interface
 func (e String) Error() string {
 	return e.String()
 }
 
-// typedError implements stringer interface
+// String implements fmt.Stringer interface
 func (e String) String() string {
-	return string(e)
+	return *(*string)(&e)
 }
