@@ -1,10 +1,12 @@
-package typed_errors
+package serrors
 
 import (
-	"bytes"
 	"runtime"
 	"strconv"
+	"strings"
 )
+
+var WrapSeparator = ": "
 
 type Wrapped interface {
 	Unwrap() error
@@ -12,7 +14,7 @@ type Wrapped interface {
 
 // wrapped is custom error type for better error handling
 type wrapped struct {
-	TypedError
+	error
 	cause     error
 	stackFunc func() string
 }
@@ -22,19 +24,44 @@ func (e wrapped) Wrap(cause error) wrapped {
 	return Wrap(e, cause)
 }
 
-// Unwrap implements errors.Unwrap interface
+func (e wrapped) WithStack() wrapped {
+	return WrapWithStack(e.error, e.cause)
+}
+
+// Unwrap implements Wrapped interface
 func (e wrapped) Unwrap() error {
 	return e.cause
 }
 
+// Is implements Comparer interface
+// Check if errors in chain match provided error
+func (e wrapped) Is(err error) bool {
+	if compare(e.error, err) || compare(e.cause, err) {
+		return true
+	}
+
+	return false
+}
+
+func compare(err, cause error) bool {
+	if cmp, ok := err.(Comparer); ok && cmp.Is(cause) {
+		return true
+	}
+
+	if wrp, ok := err.(Wrapped); ok && compare(wrp.Unwrap(), cause) {
+		return true
+	}
+
+	return false
+}
+
 // Error implements error interface; prints both error and cause
 func (e wrapped) Error() string {
-	var builder bytes.Buffer
-	builder.WriteString(e.TypedError.Error())
+	var builder strings.Builder
+	builder.WriteString(e.error.Error())
 
-	const separator = ": "
 	if e.cause != nil {
-		builder.WriteString(separator)
+		builder.WriteString(WrapSeparator)
 		builder.WriteString(e.cause.Error())
 	}
 
@@ -49,28 +76,28 @@ func (e wrapped) withStack() wrapped {
 		e.stackFunc = func() string {
 			frames := runtime.CallersFrames(callers[:])
 
-			var buf bytes.Buffer
+			var builder strings.Builder
 			for {
 				frame, more := frames.Next()
-				buf.WriteString(frame.Function)
-				buf.WriteString("\n\t")
-				buf.WriteString(frame.File)
-				buf.WriteString(":")
-				buf.WriteString(strconv.Itoa(frame.Line))
-				buf.WriteString("\n")
+				builder.WriteString(frame.Function)
+				builder.WriteString("\n\t")
+				builder.WriteString(frame.File)
+				builder.WriteString(":")
+				builder.WriteString(strconv.Itoa(frame.Line))
+				builder.WriteString("\n")
 				if !more {
 					break
 				}
 			}
 
-			return buf.String()
+			return builder.String()
 		}
 	}
 
 	return e
 }
 
-// Stack implements TypedError
+// Stack implements Comparer
 // Stack returns original stack which was placed to wrapped error
 func (e wrapped) Stack() string {
 	if e.stackFunc != nil {
@@ -81,18 +108,8 @@ func (e wrapped) Stack() string {
 }
 
 // Wrap wraps an error, adds its cause and stack trace
-func Wrap(err, cause error) (e wrapped) {
-	te, ok := err.(TypedError)
-	if !ok {
-		e.TypedError = String(err.Error()).New()
-		e.cause = cause
-		return e
-	}
-
-	e.TypedError = te
-	e.cause = cause
-
-	return e
+func Wrap(err, cause error) wrapped {
+	return wrapped{error: err, cause: cause}
 }
 
 // WrapWithStack wraps cause with err and stores stack trace
