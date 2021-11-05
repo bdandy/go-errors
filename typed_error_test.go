@@ -36,6 +36,7 @@ func TestTypedError_Is(t *testing.T) {
 		{"error has different type but same text", err.New(), args{errors.New("err")}, false},
 		// wrong behaviour for Is method
 		{"error was cause", wrapped, args{fmt.Errorf("caused by %w", err)}, false},
+		{"error is nil", err.New(), args{nil}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
