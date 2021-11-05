@@ -1,3 +1,3 @@
-module github.com/Bogdan-D/go-typed-errors
+module github.com/bdandy/go-typed-errors
 
 go 1.13
