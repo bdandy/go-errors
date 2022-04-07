@@ -1,58 +1,64 @@
 # go-errors
 
 ## Why this repo was created?
-Main reason was to create additional methods for better error typing support.
+My own implementation of sentinel errors (https://dave.cheney.net/tag/errors)
 
 ## Features
-- Errors as constants
+- `Errors` are constants
 - `errors.Is` support
 - `Wrap` method to wrap original error with `errors.Unwrap` method
 - `String.New` support to add context arguments for error message, while `errors.Is` still compares error itself
 - `Error.WithStack` support to store stack trace at time method called
 
+
+## Way to go with errors
+
+My recommendation is to design your packages to return all errors which are declared. 
+So you have to declare package level error, and wrap original error into your sentinel error.
+
+For example, if your package works with filesystem, consumer don't know anything about `io.EOF` error.
+`io.EOF` should be wrapped into your custom error type `EOF` and returned to consumer, so he won't search 3rd party packages errors.
+
 ### Show me the code
 
-https://play.golang.org/p/U2lC-yC2YIb
-
-```go
-package main
+```go 
+package mypkg
 
 import (
-	"errors"
-	"log"
-
-	serr "github.com/bdandy/go-errors"
+    "io"
+    "errors"
+    
+    serr "github.com/bdandy/go-errors"
 )
 
-const ErrSomeFunc = serr.String("somefunc for %s failed")
+const (
+    ErrEOF = serr.String("EOF")
+    ErrUnknown = serr.String("unknown error")
+)
 
-func someFunc() error {
-	return errors.New("io error")
+func testfunc() error {
+    return io.EOF
 }
 
-func funcWithArgs(args ...interface{}) error {
-	err := someFunc()
-	if err != nil {
-		return ErrSomeFunc.New(args...).Wrap(err)
-	}
-	return nil
-}
-
-func main() {
-	err := funcWithArgs("tryme!")
-
-	// handle ErrSomeFunc error type
-	if errors.Is(err, ErrSomeFunc) {
-		log.Print("typedError handled: ", err)
-	} else if err != nil {
-		log.Print("other error cases:", err)
-	}
+// TestEOF returns ErrEOF or ErrUknown on some unexpected cases
+//  io.EOF is wrapped into ErrEOF so mypkg has all expected errors in one place,
+//  so it's more easy to use mypkg and handle errors 
+//  (you don't have to know anything about `io` package and it's behaviour)
+func TestEOF() error {
+    err := testfunc() 
+    
+    switch {
+    case errors.Is(io.EOF):
+        return ErrEOF.New().Wrap(err)
+    default: 
+        return ErrUknown
+    }
 }
 
 ```
 
 ### Benchmark
-Comparsion with `errors.Errorf` and `pkg/errors`
+Comparison with `errors.Errorf` and `pkg/errors`
 
 ```
 goos: linux
